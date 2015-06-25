@@ -64,6 +64,9 @@ function! airline#init#bootstrap()
         \ 'modified': '+',
         \ 'space': ' ',
         \ 'crypt': get(g:, 'airline_crypt_symbol', nr2char(0x1F512)),
+        \ 'pad': get(g:airline_symbols, 'space', ' '),
+        \ 'pad_section': get(g:airline_symbols, 'space', ' '),
+        \ 'pad_sep': get(g:airline_symbols, 'space', ' '),
         \ }, 'keep')
 
   call airline#parts#define('mode', {
@@ -90,7 +93,7 @@ endfunction
 function! airline#init#sections()
   let spc = g:airline_symbols.space
   if !exists('g:airline_section_a')
-    let g:airline_section_a = airline#section#create_left(['mode', 'crypt', 'paste', 'capslock', 'iminsert'])
+    let g:airline_section_a = airline#section#create_left(['mode', 'mode', 'mode', 'crypt', 'paste', 'capslock', 'iminsert'])
   endif
   if !exists('g:airline_section_b')
     let g:airline_section_b = airline#section#create(['hunks', 'branch'])
