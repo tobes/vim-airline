@@ -12,6 +12,62 @@ let s:layout = get(g:, 'airline#extensions#default#layout', [
       \ [ 'x', 'y', 'z', 'warning' ]
       \ ])
 
+let s:layout_force = get(g:, 'airline#extensions#default#layout_force', {'normal' : ['z']})
+
+
+let s:layout_info = {}
+
+function! s:create_layout_info()
+  " populate dictionary s:layout_info { section_key: append style,..}
+
+  function! s:get_forced(key)
+    for force in keys(s:layout_force)
+      if index(get(s:layout_force, force, []), a:key) > -1
+        return force
+      endif
+    endfor
+    return 0
+  endfunction
+
+  for idx in range(2)
+    let l:layout_parts = s:layout[idx]
+    for idy in range(len(l:layout_parts))
+      let l:layout_part = l:layout_parts[idy]
+      let l:forced = s:get_forced(l:layout_part)
+      if type(l:forced) == type('')
+        let l:layout_type = l:forced
+      elseif idx == 0 && idy == 0
+        let l:layout_type = 'left'
+      elseif idx == 1
+        if idy == len(l:layout_parts) - 1
+          let l:layout_type = 'norm'
+        else
+          let l:layout_type = 'right'
+        endif
+      else
+        let l:layout_type = 'norm'
+      endif
+      let s:layout_info[l:layout_part] = l:layout_type
+    endfor
+  endfor
+endfunction
+
+call s:create_layout_info()
+
+
+function! airline#extensions#default#make_section(key)
+  let l:layout = get(s:layout_info, a:key, 'norm')
+  let l:data = g:airline_section_{a:key}
+  if l:layout ==# 'left'
+    return airline#section#create_left(l:data)
+  elseif l:layout ==# 'right'
+    return airline#section#create_right(l:data)
+  else
+    return airline#section#create(l:data)
+  endif
+endfunction
+
+
 function! s:get_section(winnr, key, ...)
   if has_key(s:section_truncate_width, a:key)
     if winwidth(a:winnr) < s:section_truncate_width[a:key]
@@ -19,7 +75,11 @@ function! s:get_section(winnr, key, ...)
     endif
   endif
   let spc = g:airline_symbols.space
-  let text = airline#util#getwinvar(a:winnr, 'airline_section_'.a:key, g:airline_section_{a:key})
+  if type(g:airline_section_{a:key}) == type([])
+    let text = airline#extensions#default#make_section(a:key)
+  else
+    let text = airline#util#getwinvar(a:winnr, 'airline_section_'.a:key, g:airline_section_{a:key})
+  endif
   let [prefix, suffix] = [get(a:000, 0, '%('.spc), get(a:000, 1, spc.'%)')]
   return empty(text) ? '' : prefix.text.suffix
 endfunction
